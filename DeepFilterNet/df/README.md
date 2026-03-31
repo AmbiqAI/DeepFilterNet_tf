@@ -98,6 +98,63 @@ If you are working on TF conversion today, use this order:
 
 ---
 
+## Environment setup
+
+For this TF/TFLite workflow, you need:
+
+- Python
+- PyTorch + torchaudio
+- TensorFlow (used for TF model execution and TFLite export)
+- Rust + `maturin` (to build `libdf` / `deepfilterlib` Python bindings)
+- Python packages used by the export/tests such as `soundfile`, `h5py`, and `pytest`
+
+### Option 1: Use the existing setup script
+
+From the repository root:
+
+```bash
+source scripts/setup_env.sh
+setup_env "$HOME" "$PWD"
+```
+
+This sets up the project conda environment, installs PyTorch, and builds:
+
+- `pyDF`
+- `pyDF-data`
+
+If you also want the TF/TFLite conversion flow in this directory, install the extra Python packages after activating the environment:
+
+```bash
+pip install tensorflow soundfile h5py pytest
+pip install -r DeepFilterNet/requirements.txt
+pip install -r DeepFilterNet/requirements_test.txt
+```
+
+### Option 2: Manual setup
+
+If you prefer to manage the environment yourself, a minimal setup from the repository root is:
+
+```bash
+python -m pip install -U pip maturin
+pip install torch torchaudio tensorflow soundfile h5py pytest
+pip install -r DeepFilterNet/requirements.txt
+pip install -r DeepFilterNet/requirements_test.txt
+maturin develop --release -m pyDF/Cargo.toml
+maturin develop --release -m pyDF-data/Cargo.toml
+```
+
+### Quick sanity check
+
+After setup, these commands should work from the repository root:
+
+```bash
+python -m pytest DeepFilterNet/df/test_tf_conversion.py -q
+python -m pytest DeepFilterNet/df/test_tf_stateful_streaming.py -q
+python DeepFilterNet/df/test_tflite_vs_pytorch.py --skip-export
+```
+
+---
+
 ## Quick command summary
 
 ### Run current stateful tests
