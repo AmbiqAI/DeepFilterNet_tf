@@ -11,7 +11,7 @@ import torch
 from appdirs import user_cache_dir
 from loguru import logger
 from torch import Tensor
-from torch._six import string_classes
+string_classes = (str,)
 from torch.autograd import Function
 from torch.types import Number
 

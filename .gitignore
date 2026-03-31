@@ -145,3 +145,6 @@ dmypy.json
 
 # IDE
 .idea
+.venv/
+__pycache__/
+*.pyc
