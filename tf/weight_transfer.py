@@ -114,19 +114,8 @@ def transfer_weights(pt_state_dict, tf_model):
         # For ConvTranspose2d: flip kernel along spatial dims (kH, kW)
         if is_transpose:
             w = w[:, :, ::-1, ::-1].copy()
-        # Check if the conv is grouped (depthwise): in_ch_per_group == 1
-        pt_groups = w.shape[0] // (w.shape[0] // max(w.shape[1], 1)) if w.shape[1] == 1 and w.shape[0] > 1 else 1
 
-        if hasattr(tf_layer, 'group_convs') and tf_layer.groups > 1:
-            # Separable: split grouped conv weights into per-group
-            n_groups = tf_layer.groups
-            out_per = w.shape[0] // n_groups
-            for g in range(n_groups):
-                gw = w[g * out_per:(g + 1) * out_per]
-                gw_tf = transpose_conv2d(gw)
-                tf_layer.group_convs[g].set_weights([gw_tf])
-        else:
-            tf_layer.conv.set_weights([transpose_conv2d(w)])
+        tf_layer.conv.set_weights([transpose_conv2d(w)])
 
         # Transfer pointwise conv
         if pw_conv_idx is not None and hasattr(tf_layer, 'pw_conv') and tf_layer.pw_conv is not None:

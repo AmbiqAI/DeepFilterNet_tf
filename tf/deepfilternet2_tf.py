@@ -117,20 +117,11 @@ class Conv2dNormAct(tf.keras.layers.Layer):
         self.groups = groups
         self.separable = separable
 
-        if groups > 1:
-            assert in_ch % groups == 0 and out_ch % groups == 0
-            self.group_convs = [
-                tf.keras.layers.Conv2D(
-                    out_ch // groups, kernel_size,
-                    strides=(1, fstride), padding="valid", use_bias=bias,
-                )
-                for _ in range(groups)
-            ]
-        else:
-            self.conv = tf.keras.layers.Conv2D(
-                out_ch, kernel_size,
-                strides=(1, fstride), padding="valid", use_bias=bias,
-            )
+        self.conv = tf.keras.layers.Conv2D(
+            out_ch, kernel_size,
+            strides=(1, fstride), padding="valid", use_bias=bias,
+            groups=groups,
+        )
 
         if separable:
             self.pw_conv = tf.keras.layers.Conv2D(out_ch, 1, use_bias=False)
@@ -149,11 +140,7 @@ class Conv2dNormAct(tf.keras.layers.Layer):
         if self.fpad > 0:
             x = tf.pad(x, [[0, 0], [0, 0], [self.fpad, self.fpad], [0, 0]])
 
-        if self.groups > 1:
-            splits = tf.split(x, self.groups, axis=-1)
-            x = tf.concat([c(s) for c, s in zip(self.group_convs, splits)], axis=-1)
-        else:
-            x = self.conv(x)
+        x = self.conv(x)
 
         if self.pw_conv is not None:
             x = self.pw_conv(x)
@@ -199,20 +186,11 @@ class ConvTranspose2dNormAct(tf.keras.layers.Layer):
         self.groups = groups
         self.separable = separable
 
-        if groups > 1:
-            assert in_ch % groups == 0 and out_ch % groups == 0
-            self.group_convs = [
-                tf.keras.layers.Conv2D(
-                    out_ch // groups, kernel_size,
-                    strides=(1, 1), padding="valid", use_bias=bias,
-                )
-                for _ in range(groups)
-            ]
-        else:
-            self.conv = tf.keras.layers.Conv2D(
-                out_ch, kernel_size,
-                strides=(1, 1), padding="valid", use_bias=bias,
-            )
+        self.conv = tf.keras.layers.Conv2D(
+            out_ch, kernel_size,
+            strides=(1, 1), padding="valid", use_bias=bias,
+            groups=groups,
+        )
 
         if separable:
             self.pw_conv = tf.keras.layers.Conv2D(out_ch, 1, use_bias=False)
@@ -248,11 +226,7 @@ class ConvTranspose2dNormAct(tf.keras.layers.Layer):
             right_pad = self.fpad + (self.fstride - 1 if self.fstride > 1 else 0)
             x = tf.pad(x, [[0, 0], [0, 0], [self.fpad, right_pad], [0, 0]])
 
-        if self.groups > 1:
-            splits = tf.split(x, self.groups, axis=-1)
-            x = tf.concat([c(s) for c, s in zip(self.group_convs, splits)], axis=-1)
-        else:
-            x = self.conv(x)
+        x = self.conv(x)
 
         if self.pw_conv is not None:
             x = self.pw_conv(x)
